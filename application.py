@@ -1,7 +1,7 @@
 import chess
 from pgnReader import OpeningTree, Opening
 import random as rand
-from pptree import *
+#from pptree import *
 
 #setting up Tree
 #remodel later
