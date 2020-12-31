@@ -1,10 +1,8 @@
+import chess
+
+
 class Opening:
-    def __init__(
-        self,
-        pgn,
-        name,
-        children=[],
-    ):
+    def __init__(self, pgn, name, children=[], fen=''):
         self.pgn = pgn
 
         self.moves = pgn.split(" ")
@@ -12,6 +10,12 @@ class Opening:
 
         self.name = name
         self.children = children
+        self.fen = fen
+        if (self.fen == ''):
+            board = chess.Board()
+            for move in self.moves:
+                board.push(move)
+            self.fen = board.fen()
 
     def hasChildren(self):
         return len(self.children) > 0

@@ -1,5 +1,5 @@
 import chess
-from pgnReader import OpeningTree, Opening
+from ChessOpens.pgnReader import OpeningTree, Opening
 import random as rand
 #from pptree import *
 
