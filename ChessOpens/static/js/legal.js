@@ -25,6 +25,20 @@ function onDrop (source, target) {
 
   // illegal move
   if (move === null) return 'snapback'
+  
+  //compares move to allowed moves in the position
+  //else if(!moves.has(move.san)){
+  //  console.log("Moves in our database in this position include: " + String(moves))
+  //  return 'snapback'
+  //}
+  //valid move has been reached
+  //$.post("/", {"m1ove":mov1e.san})
+$.ajax({
+    type: "POST",
+    url: "/",
+    data: JSON.stringify({"move":move, "pgn": game.pgn()}),
+    contentType: "application/json",
+});
 
   updateStatus()
 }
@@ -55,7 +69,7 @@ function updateStatus () {
 
   // game still on
   else {
-    status = moveColor + ' to move'
+    status = moveColor + ' to move'  
 
     // check?
     if (game.in_check()) {
