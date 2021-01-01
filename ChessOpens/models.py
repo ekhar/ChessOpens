@@ -7,6 +7,7 @@ class Opening(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('opening.id'))
     name = db.Column(db.String(512), unique=True, nullable=False)
     pgn = db.Column(db.String(1024), unique=True, nullable=False)
+    #fen = db.Column(db.String(512), unique=True, nullable=True)
     children = db.relationship("Opening")
 
     def hasChildren(self):

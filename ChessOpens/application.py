@@ -7,7 +7,7 @@ def check_valid_move(node, move, move_number, pgn):
     return move in all_moves
 
 
-def change_node(node_id, move, move_number, pgn):
+def change_node(node_id, move_number, pgn):
     node = Opening.query.get(node_id)
     #if move is contained in current node
     if len(node.getMoves()) > move_number:
@@ -44,7 +44,7 @@ def get_all_possible(node_id, move_number, pgn):
     else:
         pass
 
-    return str_set, node_list
+    return list(str_set), node_list
 
 
 #def printPGN(pgn, move_num):
