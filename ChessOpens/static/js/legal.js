@@ -1,10 +1,14 @@
-var op_data = {{ op_data|tojson }}
  var board = null
 var game = new Chess()
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 var $name = $('#name')
+var legalmoves = op_data.legalmoves
+var $legalmoves = $('#legalmoves')
+var $id = $('#id') 
+var id = op_data.id
+
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
@@ -27,20 +31,14 @@ function onDrop (source, target) {
   // illegal move
   if (move === null) return 'snapback'
   //compares move to allowed moves in the position
-  console.log(op_data.db_moves)
-  //if(!op_data.db_moves.includes(move.san)){
-  //  console.log("Moves in our database in this position include: " + String(moves))
-  //   return 'snapback'
-  //}
+  if((!legalmoves.includes(move.san)) && legalmoves.length >0){
+    game.undo()
+    $legalmoves.html("Acceptable moves are: " + String(legalmoves))
+    return 'snapback'
+  }
 //
   //valid move has been reached
-$.ajax({
-    type: "POST",
-    url: "/",
-    data: JSON.stringify({"move":move, "pgn": game.pgn()}),
-    contentType: "application/json",
-});
-
+  $legalmoves.html("")
   updateStatus()
 }
 
@@ -77,6 +75,21 @@ function updateStatus () {
       status += ', ' + moveColor + ' is in check'
     }
   }
+
+  req = $.ajax({
+    type: "POST",
+    url: "/update",
+    data: JSON.stringify({"pgn": game.pgn(), "id" :id}),
+    contentType: "application/json",
+});
+
+    req.done(function(data){
+
+        $name.html(data.op_name) 
+        id = data.id
+        $id.html(data.id)
+        legalmoves = data.db_moves
+    })
 
   $status.html(status)
   $fen.html(game.fen())
