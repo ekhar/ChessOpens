@@ -15,6 +15,7 @@
 <label>OP Name:</label>
 <text>{{ op_data.op_name }}</text>
 <div id="name"></div>
+<div id="legalmoves"></div>
 
 <script>
     console.log("{{ op_data.op_name }}");
@@ -31,6 +32,8 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 var $name = $('#name')
+var $legalmoves = $('#legalmoves')
+var moves= op_data.db_moves
 var id = op_data.id
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
@@ -55,13 +58,13 @@ function onDrop (source, target) {
   if (move === null) return 'snapback'
   //compares move to allowed moves in the position
   console.log(op_data.db_moves)
-  //if(!op_data.db_moves.includes(move.san)){
-  //  console.log("Moves in our database in this position include: " + String(moves))
-  //   return 'snapback'
-  //}
+  if(!moves.includes(move.san)){
+    $legalmoves.html("Acceptable moves are: " + String(moves))
+     return 'snapback'
+  }
 //
   //valid move has been reached
-
+  $legalmoves.html("")
   updateStatus()
 }
 
@@ -110,6 +113,7 @@ function updateStatus () {
 
         $name.html(data.op_name) 
         id = data.id
+        moves =data.db_moves
     })
 
   $status.html(status)
