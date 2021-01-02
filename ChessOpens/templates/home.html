@@ -1,0 +1,25 @@
+{%extends 'layout.html'%} {%block board%}
+<div class="d-flex flex-row mb-3 align-items-center">
+  <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
+  <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+  <div id="myBoard" style="width: 400px"></div>
+  <script>
+    var op_data = {{ op_data|tojson }}
+  </script>
+
+  <script src="{{url_for('static',filename='js/legal.js')}}"></script>
+
+  <div class="order-1">
+    <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
+    <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+    <div id="myBoard" style="width: 400px"></div>
+    <script>
+      var op_data = {{ op_data|tojson }}
+    </script>
+
+    <script src="{{url_for('static',filename='js/legal.js')}}"></script>
+  </div>
+</div>
+{% endblock %}

@@ -96,12 +96,40 @@
       crossorigin="anonymous"
     ></script>
 
+    
     <div class="d-flex flex-row mb-3 align-items-center">
-      {%block boardinfo%} {%endblock%}
+        <div class="order-2">
+          <ul class="list-group">
+            <li class="list-group-item"><div id="name"></div></li>
+            <li class="list-group-item" style="overflow-wrap: break-word">
+              PGN:
+              <div id="pgn"></div>
+            </li>
+            <li class="list-group-item">
+              Available Moves
+              <div id="legalmoves"></div>
+            </li>
+            <li class="list-group-item">
+              Status:
+              <div id="status"></div>
+            </li>
+            <li class="list-group-item">Vestibulum at eros</li>
+          </ul>
+        </div>
 
-      <div class="order-1">
-        <div>{%block board%} {%endblock%}</div>
+    <div class="d-flex flex-row mb-3 align-items-center">
+      <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
+      <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+      <div id="myBoard" style="width: 400px"></div>
+      <script>
+        var op_data = {{ op_data|tojson }}
+      </script>
+
+      <script src="{{url_for('static',filename='js/legal.js')}}"></script>
+
       </div>
     </div>
+  </div>
   </body>
 </html>

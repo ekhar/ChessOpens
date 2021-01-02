@@ -15,7 +15,7 @@ def random_moves():
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
     op_name = Opening.query.get(id).name
-    return render_template("home.html",
+    return render_template("layout.html",
                            op_data={
                                "op_name": op_name,
                                "db_moves": list(db_moves),
@@ -29,7 +29,6 @@ def update_nodes():
         #pull info from js query
         pgn = request.get_json()["pgn"]
         id = request.get_json()["id"]
-        print(id)
         #find the last period in pgn bc move numbers always before period in pgn
         if (len(pgn) == 0):
             move_number = 0
@@ -42,9 +41,6 @@ def update_nodes():
         id = change_node(id, move_number, pgn)
         node = Opening.query.get(id)
         db_moves = get_all_possible(id, move_number, pgn)[0]
-        print(id)
-        print(db_moves)
-        print(node.name)
         return jsonify({
             "op_name": node.name,
             "db_moves": list(db_moves),
