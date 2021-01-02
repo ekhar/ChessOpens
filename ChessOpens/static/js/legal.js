@@ -89,8 +89,8 @@ function updateStatus () {
         id = data.id
         $id.html(data.id)
         legalmoves = data.db_moves
+        $legalmoves.html(String(legalmoves))
     })
-
   $status.html(status)
   $fen.html(game.fen())
   $pgn.html(game.pgn())

@@ -14,12 +14,12 @@ def random_moves():
     # all possible moves
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
-    op_name = Opening.query.get(session["node_id"]).name
+    op_name = Opening.query.get(id).name
     return render_template("home.html",
                            op_data={
                                "op_name": op_name,
                                "db_moves": list(db_moves),
-                               "id": session["node_id"]
+                               "id": id
                            })
 
 
