@@ -1,25 +1,79 @@
-{%extends 'layout.html'%} {%block board%}
-<div class="d-flex flex-row mb-3 align-items-center">
-  <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
-  <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
-  <div id="myBoard" style="width: 400px"></div>
-  <script>
-    var op_data = {{ op_data|tojson }}
-  </script>
+{%extends 'layout.html'%} {%block boardinfo%}
+<blockquote class="blockquote text-center" style="margin: 20px">
+  <p class="mb-0">
+    The opening is the only phase that holds out the potential for true
+    creativity and doing something entirely new.
+  </p>
+  <footer class="blockquote-footer">
+    Garry Kasparov<cite title="Source Title"> (2010)</cite>
+  </footer>
+</blockquote>
 
-  <script src="{{url_for('static',filename='js/legal.js')}}"></script>
-
-  <div class="order-1">
+<div class="d-flex flex-column mb-3 align-items-center">
+  <div class="d-flex flex-row-reverse align-items-center">
+    {# all opening names #}
+    <ul class="list-group">
+      {% for opening in openings %}
+      <li
+        onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
+        class="list-group-item list-group-item-action"
+      >
+        {{opening.name}}
+        <div class="text-truncate"><small>{{opening.pgn}}</small></div>
+      </li>
+      {%endfor%}
+    </ul>
+    {# end all opening names #} {# board info #}
+    <div class="d-flex flex-column mb-3 align-items-center">
+      <ul
+        class="list-group flex-column"
+        style="max-width: 220px; max-height: max-content"
+      >
+        <li class="list-group-item">
+          <div id="name"></div>
+        </li>
+        <li
+          class="list-group-item"
+          style="display: inline; overflow-wrap: break-word"
+        >
+          PGN:
+          <div id="pgn"></div>
+        </li>
+        <li class="list-group-item">
+          Available Moves
+          <div id="legalmoves"></div>
+        </li>
+        <li class="list-group-item">
+          Status:
+          <div id="status"></div>
+        </li>
+        <li class="list-group-item">Vestibulum at eros</li>
+      </ul>
+    </div>
+    {# end board info #} {# Chess board #}
     <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
     <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
-    <div id="myBoard" style="width: 400px"></div>
+    <div id="myBoard" class="flex-lg-row" style="width: 600px"></div>
     <script>
-      var op_data = {{ op_data|tojson }}
+      var op_data = {{ op_data| tojson }}
     </script>
 
-    <script src="{{url_for('static',filename='js/legal.js')}}"></script>
+    <script src="{{url_for('static',filename='js/home.js')}}"></script>
+    {# end Chess board #}
+
+    <script>
+      function loadboard(op_id, op_pgn) {
+        id = op_id;
+        pgn = op_pgn;
+        updateStatus();
+        game.load_pgn(pgn);
+        fen = game.fen();
+
+        board.position(fen);
+        updateStatus();
+      }
+    </script>
   </div>
 </div>
-{% endblock %}
+{%endblock%}

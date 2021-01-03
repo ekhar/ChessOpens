@@ -42,7 +42,7 @@ def get_all_possible(node_id, move_number, pgn):
                     node_list.append(node.id)
     #if the node has no children and its max pgn has been reached
     else:
-        pass
+       pass 
 
     return list(str_set), node_list
 

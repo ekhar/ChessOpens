@@ -5,9 +5,8 @@ class Opening(db.Model):
     __tablename__ = 'opening'
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('opening.id'))
-    name = db.Column(db.String(512), unique=True, nullable=False)
+    name = db.Column(db.String(512), unique=False,nullable=False)
     pgn = db.Column(db.String(1024), unique=True, nullable=False)
-    #fen = db.Column(db.String(512), unique=True, nullable=True)
     children = db.relationship("Opening")
 
     def hasChildren(self):
@@ -34,6 +33,16 @@ class Opening(db.Model):
     def __str__(self):
         return self.name
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    password = db.Column(db.String(60), nullable=False)
+    favorites = db.Column(db.Integer)
+
+    def __repr__(self):
+        return f"User('{self.username}"
 
 def addOpening(pgn, name, root=None):
     if root is None:
