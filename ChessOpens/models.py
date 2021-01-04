@@ -2,6 +2,7 @@ from ChessOpens import db
 
 
 class Opening(db.Model):
+   # __searchable__ = ["pgn", "name"]
     __tablename__ = 'opening'
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('opening.id'))

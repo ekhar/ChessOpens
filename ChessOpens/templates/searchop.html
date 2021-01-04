@@ -1,0 +1,9 @@
+{% for opening in openings %}
+<li
+  onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
+  class="list-group-item list-group-item-action"
+>
+  {{opening.name}}
+  <div class="text-truncate"><small>{{opening.pgn}}</small></div>
+</li>
+{%endfor%}

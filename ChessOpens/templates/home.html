@@ -8,26 +8,57 @@
     Garry Kasparov<cite title="Source Title"> (2010)</cite>
   </footer>
 </blockquote>
-
 <div class="d-flex flex-column mb-3 align-items-center">
   <div class="d-flex flex-row-reverse align-items-center">
     {# all opening names #}
-    <ul class="list-group">
-      {% for opening in openings %}
-      <li
-        onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
-        class="list-group-item list-group-item-action"
+    <div class="d-flex flex-column mb-3 align-items-center">
+      {# search bar#}
+      <form
+        class="form-inline d-flex justify-content-center md-form form-sm mt-0"
+        method="POST"
       >
-        {{opening.name}}
-        <div class="text-truncate"><small>{{opening.pgn}}</small></div>
-      </li>
-      {%endfor%}
-    </ul>
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input
+          class="form-control form-control-sm ml-3 w-75"
+          type="text"
+          placeholder="Search"
+          aria-label="Search"
+          onkeyup="searchbar(this.value)"
+        />
+      </form>
+      {# end search bar #}:
+      <ul
+        id="op_list"
+        class="list-group"
+        style="
+          max-height: 300px;
+          max-width: 250px;
+          margin-bottom: 10px;
+          overflow: scroll;
+          -webkit-overflow-scrolling: touch;
+        "
+      >
+        {% for opening in openings %}
+        <li
+          onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
+          class="list-group-item list-group-item-action"
+        >
+          {{opening.name}}
+          <div class="text-truncate"><small>{{opening.pgn}}</small></div>
+        </li>
+        {%endfor%}
+      </ul>
+    </div>
     {# end all opening names #} {# board info #}
     <div class="d-flex flex-column mb-3 align-items-center">
       <ul
         class="list-group flex-column"
-        style="max-width: 220px; max-height: max-content"
+        style="
+          min-width: 220px;
+          max-width: 220px;
+          max-height: 300px;
+          min-height: 300px;
+        "
       >
         <li class="list-group-item">
           <div id="name"></div>
@@ -39,41 +70,77 @@
           PGN:
           <div id="pgn"></div>
         </li>
-        <li class="list-group-item">
+        <li class="list-group-item" style="display: inline">
           Available Moves
-          <div id="legalmoves"></div>
+          <div id="legalmoves" class="text-truncate"></div>
         </li>
         <li class="list-group-item">
           Status:
           <div id="status"></div>
         </li>
-        <li class="list-group-item">Vestibulum at eros</li>
       </ul>
     </div>
     {# end board info #} {# Chess board #}
     <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
     <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
-    <div id="myBoard" class="flex-lg-row" style="width: 600px"></div>
+    <div id="myBoard" class="flex-lg-row" style="width: 500px"></div>
     <script>
       var op_data = {{ op_data| tojson }}
     </script>
 
     <script src="{{url_for('static',filename='js/home.js')}}"></script>
     {# end Chess board #}
-
-    <script>
-      function loadboard(op_id, op_pgn) {
-        id = op_id;
-        pgn = op_pgn;
-        updateStatus();
-        game.load_pgn(pgn);
-        fen = game.fen();
-
-        board.position(fen);
-        updateStatus();
-      }
-    </script>
   </div>
+
+  <button
+    type="button"
+    class="btn btn-secondary btn-sm"
+    onclick="undomoveBoard()"
+  >
+    Undo
+  </button>
 </div>
+
+<script>
+  function undomoveBoard() {
+    if (id > 1) {
+      game.undo();
+      id = parent_id;
+      updateStatus();
+      fen = game.fen();
+      board.position(fen);
+      updateStatus();
+    }
+  }
+</script>
+
+<script>
+  function loadboard(op_id, op_pgn) {
+    id = op_id;
+    pgn = op_pgn;
+    updateStatus();
+    game.load_pgn(pgn);
+    fen = game.fen();
+
+    board.position(fen);
+    updateStatus();
+  }
+</script>
+
+<script>
+  function searchbar(str) {
+    console.log(str);
+    req = $.ajax({
+      type: "POST",
+      url: "/search",
+      data: JSON.stringify({ str_name: str }), //, op_id = opening_id, op_data, db_moves = legalmoves, id = id, parent_id=parent_id }),
+      contentType: "application/json",
+    });
+    req.done(function (data) {
+      $("#op_list").html("");
+      $("#op_list").append(data.data);
+    });
+  }
+</script>
 {%endblock%}
