@@ -10,12 +10,18 @@ class Opening(db.Model):
     pgn = db.Column(db.String(1024), unique=True, nullable=False)
     children = db.relationship("Opening")
 
+
     def hasChildren(self):
         return len(self.children) > 0
 
     def addChild(self, pgn, name):
-        opening = Opening(parent_id=self.id, name=name, pgn=pgn)
-        db.session.add(opening)
+        #if Opening.query.filter_by(pgn=pgn.strip()):
+         #   pass
+        if False:
+            pass
+        else:
+            opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip())
+            db.session.add(opening)
 
     def getMoves(self):
         moves = self.pgn.split(" ")
