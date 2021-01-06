@@ -1,5 +1,14 @@
 from ChessOpens import db
 
+favorites = db.Table('favorites',
+db.Column('user.id', db.Integer, db.ForeignKey('user.id')),
+db.Column('opening.id', db.Integer, db.ForeignKey('opening.id'))
+)
+
+#customs = db.Table('custom',
+#db.Column('user.id', db.Integer, db.ForeignKey('user.id')),
+#db.Column('opening.id', db.Integer, db.ForeignKey('opening.id'))
+#)
 
 class Opening(db.Model):
    # __searchable__ = ["pgn", "name"]
@@ -9,7 +18,7 @@ class Opening(db.Model):
     name = db.Column(db.String(512), unique=False,nullable=False)
     pgn = db.Column(db.String(1024), unique=True, nullable=False)
     children = db.relationship("Opening")
-
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def hasChildren(self):
         return len(self.children) > 0
@@ -42,14 +51,13 @@ class Opening(db.Model):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
-    favorites = db.Column(db.Integer)
+    favorites = db.relationship("Opening", secondary=favorites, backref=db.backref("user_favorites"), lazy='dynamic')
+    custom_op = db.relationship("Opening", backref="user")
 
-    def __repr__(self):
-        return f"User('{self.username}"
+
 
 def addOpening(pgn, name, root=None):
     if root is None:

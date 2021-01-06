@@ -33,6 +33,7 @@ function onDrop(source, target) {
 
   // illegal move
   if (move === null) return "snapback";
+  //-----------------------FOR RANDOM PLAY----------------------------------
   //compares move to allowed moves in the position
   //if (!legalmoves.includes(move.san) && legalmoves.length > 0) {
   //  game.undo();

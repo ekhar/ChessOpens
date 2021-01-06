@@ -1,6 +1,6 @@
-from flask import render_template, url_for, jsonify, session, request
+from flask import render_template, url_for, jsonify, redirect,session, request
 from flask_session import Session
-from ChessOpens import app, db
+from ChessOpens import app, db, oauth
 from ChessOpens.models import Opening
 from ChessOpens.application import change_node, get_all_possible
 import re
@@ -50,6 +50,13 @@ def update_nodes():
         id = change_node(id, move_number, pgn)
         node = Opening.query.get(id)
         db_moves = get_all_possible(id, move_number, pgn)[0]
+
+        try:
+            email = dict(session)['profile']['email']
+            print("EMAIL: " + email)
+        except:
+            pass
+
         return jsonify({
             "op_name": node.name,
             "db_moves": list(db_moves),
@@ -76,3 +83,27 @@ def search():
         #returns html from boardinfo.html effectivley re instantiating what {{openings}} is
         return jsonify({"data": render_template("/searchop.html",openings = openings)})
 
+@app.route('/login')
+def login():
+    google = oauth.create_client('google')  # create the google oauth client
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/authorize')
+def authorize():
+    google = oauth.create_client('google')  # create the google oauth client
+    token = google.authorize_access_token()  # Access token from google (needed to get user info)
+    resp = google.get('userinfo')  # userinfo contains stuff u specificed in the scrope
+    user_info = resp.json()
+    user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
+    # Here you use the profile/user data that you got and query your database find/register the user
+    # and set ur own data in the session not the profile from google
+    session['profile'] = user_info
+    session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
+    return redirect('/')
+
+@app.route('/logout')
+def logout():
+    for key in list(session.keys()):
+        session.pop(key)
+    return redirect('/')

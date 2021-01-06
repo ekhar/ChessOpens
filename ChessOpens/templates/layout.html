@@ -11,11 +11,36 @@
     type="text/css"
     href="{{ url_for('static', filename='main.css') }}"
   />
-  <title>Chess Opens</title>
+  <title>Chess Openings</title>
+  <link
+    rel="apple-touch-icon"
+    sizes="76x76"
+    href="static/img/logo/apple-touch-icon.png"
+  />
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="static/img/logo/favicon-32x32.png"
+  />
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="16x16"
+    href="static/img/logo/favicon-16x16.png"
+  />
+  <link rel="manifest" href="static/img/logo/site.webmanifest" />
+  <link
+    rel="mask-icon"
+    href="static/img/logo/safari-pinned-tab.svg"
+    color="#5bbad5"
+  />
+  <meta name="msapplication-TileColor" content="#da532c" />
+  <meta name="theme-color" content="#ffffff" />
 
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Chess Opens</a>
+      <a class="navbar-brand" href="#">Chess Openings</a>
       <button
         class="navbar-toggler"
         type="button"
@@ -65,20 +90,10 @@
             <a class="nav-link" href="#">Account</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link disabled">Endgames</a>
+            <a data-trigger="hover" class="nav-link disabled">Endgames</a>
           </li>
         </ul>
-        <form class="form-inline my-2 my-lg-0">
-          <input
-            class="form-control mr-sm-2"
-            type="search"
-            placeholder="Search Opening"
-            aria-label="Search"
-          />
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
-            Search
-          </button>
-        </form>
+        <form class="form-inline my-2 my-lg-0">Welcome</form>
       </div>
     </nav>
 
