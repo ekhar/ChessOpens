@@ -48,7 +48,10 @@
           onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
           class="list-group-item list-group-item-action"
         >
-          {{opening.name}}
+          <label for="id-of-input" class="custom-checkbox">
+            <input type="checkbox" id="id-of-input" />
+            <span>{{opening.name}}</span>
+          </label>
           <div class="text-truncate"><small>{{opening.pgn}}</small></div>
         </li>
         {%endfor%}

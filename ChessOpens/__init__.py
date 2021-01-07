@@ -2,6 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
 import os
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///site.db'
@@ -12,8 +14,8 @@ oauth = OAuth(app)
 
 google = oauth.register(
     name='google',
-    client_id=("923183753769-diej3c20de9q78fh5ddpq9qsamcrqmv3.apps.googleusercontent.com"),
-    client_secret=("r-cMYnmTIf4TxBVKrhY9lcXO"),
+    client_id=("791476220514-arm71ea4grjdnrc8oscfkl1fmqks8ej4.apps.googleusercontent.com"),
+    client_secret=("oF8iKp3N03E0Kfskz6bPWyx1"),
     access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
@@ -22,4 +24,8 @@ google = oauth.register(
     userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only needed if using openId to fetch user info
     client_kwargs={'scope': 'openid email profile'},
 )
+
+bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
+
 from ChessOpens import views, models, initialize_db

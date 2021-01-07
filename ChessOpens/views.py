@@ -1,9 +1,13 @@
-from flask import render_template, url_for, jsonify, redirect,session, request
+from flask import flash,render_template, url_for, jsonify, redirect,session, request
 from flask_session import Session
-from ChessOpens import app, db, oauth
-from ChessOpens.models import Opening
+from ChessOpens import app, db, oauth, bcrypt
+from ChessOpens.models import Opening, User
 from ChessOpens.application import change_node, get_all_possible
+from ChessOpens.forms import RegistrationForm, LoginForm
 import re
+import os
+from flask_login import login_user, current_user
+
 
 @app.route('/', methods=["GET", "POST"])
 def home():
@@ -53,7 +57,6 @@ def update_nodes():
 
         try:
             email = dict(session)['profile']['email']
-            print("EMAIL: " + email)
         except:
             pass
 
@@ -83,8 +86,9 @@ def search():
         #returns html from boardinfo.html effectivley re instantiating what {{openings}} is
         return jsonify({"data": render_template("/searchop.html",openings = openings)})
 
-@app.route('/login')
-def login():
+@app.route('/logingoogle', methods=["GET"])
+def logingoogle():
+    print("HELLO")
     google = oauth.create_client('google')  # create the google oauth client
     redirect_uri = url_for('authorize', _external=True)
     return google.authorize_redirect(redirect_uri)
@@ -98,7 +102,11 @@ def authorize():
     user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
     # Here you use the profile/user data that you got and query your database find/register the user
     # and set ur own data in the session not the profile from google
-    session['profile'] = user_info
+    print(user_info["email"])
+    if not User.query.filter_by(email=user_info["email"]).first():
+        user = User(email=user_info["email"], password=bcrypt.generate_password_hash(str(os.urandom(12))).decode('utf-8'))
+        db.session.add(user)
+        db.session.commit()
     session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
     return redirect('/')
 
@@ -107,3 +115,40 @@ def logout():
     for key in list(session.keys()):
         session.pop(key)
     return redirect('/')
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user = User(email=form.email.data, password=hashed_password)
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Account created! You may now login', 'success')
+        return redirect(url_for('home'))
+    return render_template('register.html', title='Register', form=form)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user, remember=form.remember.data)
+            return redirect(url_for('home'))
+        else:
+            flash(f'Login Unsuccessful. Please check email and password.',"danger")
+            flash(f'Google accounts must be signed in with Google', 'flash')
+    return render_template('login.html', title='Login', form=form)
+
+
+@app.route("/favorite", methods=['GET', 'POST'])
+def favorite():
+    if request.method == "POST":
+        id = request.get_json()["id"]
+        return jsonify({"data": render_template("/searchop.html",openings = openings)})

@@ -1,9 +1,18 @@
-from ChessOpens import db
+from ChessOpens import db, login_manager
+from flask_login import UserMixin
 
 favorites = db.Table('favorites',
 db.Column('user.id', db.Integer, db.ForeignKey('user.id')),
 db.Column('opening.id', db.Integer, db.ForeignKey('opening.id'))
 )
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+
+
 
 #customs = db.Table('custom',
 #db.Column('user.id', db.Integer, db.ForeignKey('user.id')),
@@ -49,7 +58,7 @@ class Opening(db.Model):
     def __str__(self):
         return self.name
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
