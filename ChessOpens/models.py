@@ -11,9 +11,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-
-
-
 #customs = db.Table('custom',
 #db.Column('user.id', db.Integer, db.ForeignKey('user.id')),
 #db.Column('opening.id', db.Integer, db.ForeignKey('opening.id'))
@@ -32,14 +29,15 @@ class Opening(db.Model):
     def hasChildren(self):
         return len(self.children) > 0
 
-    def addChild(self, pgn, name):
+    def addChild(self, pgn, name, user_id):
         #if Opening.query.filter_by(pgn=pgn.strip()):
          #   pass
         if False:
             pass
         else:
-            opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip())
+            opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip(), user_id=user_id)
             db.session.add(opening)
+            db.session.commit()
 
     def getMoves(self):
         moves = self.pgn.split(" ")
@@ -64,16 +62,16 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     favorites = db.relationship("Opening", secondary=favorites, backref=db.backref("user_favorites"), lazy='dynamic')
-    custom_op = db.relationship("Opening", backref="user")
+    custom_op = db.relationship("Opening", backref=db.backref("user_custom", uselist='false'))
 
 
 
-def addOpening(pgn, name, root=None):
+def addOpening(pgn, name, root=None, user_id=None):
     if root is None:
         root = Opening.query.first()
     #if there are no more nodes
     if not root.hasChildren():
-        root.addChild(pgn, name)
+        root.addChild(pgn, name, user_id)
     else:
         #check if a substring of pgn exists
         matching_op = None
@@ -83,10 +81,10 @@ def addOpening(pgn, name, root=None):
                 break
         #if there are no children that match the pgn
         if matching_op is None:
-            root.addChild(pgn, name)
+            root.addChild(pgn, name, user_id)
         #if pgns are identical just exit and do nothing
         elif matching_op.pgn == pgn:
             pass
         #else recurse using the node that matches pgn
         else:
-            addOpening(pgn, name, root=matching_op)
+            addOpening(pgn, name, root=matching_op, user_id=user_id)

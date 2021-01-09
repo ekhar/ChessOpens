@@ -11,7 +11,7 @@
     type="text/css"
     href="{{ url_for('static', filename='main.css') }}"
   />
-  <title>Chess Openings</title>
+  <title>Chess Opening Moves</title>
   <link
     rel="apple-touch-icon"
     sizes="76x76"
@@ -40,7 +40,7 @@
 
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="#">Chess Openings</a>
+      <a class="navbar-brand" href="#">Chess Opening Moves</a>
       <button
         class="navbar-toggler"
         type="button"
@@ -56,9 +56,7 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item active">
-            <a class="nav-link" href="#"
-              >Home<span class="sr-only">(current)</span></a
-            >
+            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
           <li class="nav-item dropdown">
             <a
@@ -92,8 +90,19 @@
           <li class="nav-item">
             <a data-trigger="hover" class="nav-link disabled">Endgames</a>
           </li>
+          {% if current_user.is_authenticated %}
+          <span class="navbar-text">
+            <a href="{{url_for('logout')}}">Logout</a>
+          </span>
+          {%else%}
+          <span class="navbar-text">
+            <a href="{{url_for('login')}}">Login</a>
+          </span>
+          <span class="navbar-text">
+            <a href="{{url_for('register')}}">Register</a>
+          </span>
+          {%endif%}
         </ul>
-        <form class="form-inline my-2 my-lg-0">Welcome</form>
       </div>
     </nav>
 

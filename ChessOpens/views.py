@@ -1,7 +1,7 @@
 from flask import flash,render_template, url_for, jsonify, redirect,session, request
 from flask_session import Session
 from ChessOpens import app, db, oauth, bcrypt
-from ChessOpens.models import Opening, User
+from ChessOpens.models import Opening, User, addOpening
 from ChessOpens.application import change_node, get_all_possible
 from ChessOpens.forms import RegistrationForm, LoginForm
 import re
@@ -19,7 +19,7 @@ def home():
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
     op_name = Opening.query.get(id).name
-    openings = Opening.query.all()
+    openings = Opening.query.filter_by(user_id=None)
     return render_template("home.html",
                            op_data={
                                "op_name": op_name,
@@ -28,6 +28,7 @@ def home():
                                "parent_id": 0
                            },
                            openings=openings,
+                           op = Opening
                            )
 
 
@@ -54,11 +55,6 @@ def update_nodes():
         id = change_node(id, move_number, pgn)
         node = Opening.query.get(id)
         db_moves = get_all_possible(id, move_number, pgn)[0]
-
-        try:
-            email = dict(session)['profile']['email']
-        except:
-            pass
 
         return jsonify({
             "op_name": node.name,
@@ -108,6 +104,9 @@ def authorize():
         db.session.add(user)
         db.session.commit()
     session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
+    user = User.query.filter_by(email=user_info['email']).first()
+    if user:
+        login_user(user)
     return redirect('/')
 
 @app.route('/logout')
@@ -150,5 +149,87 @@ def login():
 @app.route("/favorite", methods=['GET', 'POST'])
 def favorite():
     if request.method == "POST":
-        id = request.get_json()["id"]
-        return jsonify({"data": render_template("/searchop.html",openings = openings)})
+        opening_id = request.get_json()["opening_id"]
+        user_id = current_user.id
+        opening = Opening.query.get(opening_id)
+        print(opening_id)
+        print(current_user.favorites.filter_by(id=opening_id).first())
+        if current_user.favorites.filter_by(id=opening_id).first() is None:
+            User.query.get(user_id).favorites.append(opening)
+            db.session.commit()
+            print("RUNNING")
+            print(User.query.get(user_id).favorites.all())
+            return jsonify({"id": opening.id, "status": "Unfavorite"})
+
+
+@app.route("/unfavorite", methods=['GET', 'POST'])
+def unfavorite():
+    if request.method == "POST":
+        opening_id = request.get_json()["opening_id"]
+        user_id = current_user.id
+        opening = Opening.query.get(opening_id)
+        User.query.get(user_id).favorites.remove(opening)
+        db.session.commit()
+        print("RUNNING")
+        print(User.query.get(user_id).favorites.all())
+        return jsonify({"id": opening.id, "status": "Favorite"})
+
+
+@app.route("/view_favorites", methods=['GET', 'POST'])
+def view_favorites():
+    fav_list = current_user.favorites.all()
+    return jsonify({"data": render_template("/searchop.html",openings = fav_list)})
+
+@app.route("/view_all", methods=['GET', 'POST'])
+def view_all():
+    openings = Opening.query.filter_by(user_id=None).all()
+    openings += Opening.query.filter_by(user_id=current_user.id).all()
+    return jsonify({"data": render_template("/searchop.html",openings = openings)})
+
+@app.route("/view_custom", methods=['GET', 'POST'])
+def view_custom():
+    user_id = current_user.id
+    openings = User.query.get(user_id).custom_op
+    return jsonify({"data": render_template("/searchop.html",openings = openings)})
+
+
+@app.route("/create", methods=["GET", "POST"])
+def create_page():
+    #set node_id up with origin's id
+    id = 1
+    move_number = 0
+    pgn = Opening.query.first().pgn
+    # all possible moves
+    db_moves = get_all_possible(id, move_number, pgn)[0]
+    #current node name
+    op_name = Opening.query.get(id).name
+    openings = Opening.query.filter_by(user_id=None)
+    return render_template("create.html",
+                           op_data={
+                               "op_name": op_name,
+                               "db_moves": list(db_moves),
+                               "id": id,
+                               "parent_id": 0
+                           },
+                           openings=openings,
+                           op = Opening
+                           )
+
+@app.route("/create_op", methods=["GET", "POST"])
+def create_op():
+    user_id = current_user.id
+    name = request.get_json()["name"]
+    pgn = request.get_json()["pgn"]
+    if(Opening.query.filter_by(name=name, user_id=user_id).first() is None and Opening.query.filter_by(pgn=pgn, user_id=user_id).first() is None and name.strip() != ""):
+        addOpening(name=name,pgn=pgn, user_id=user_id)
+        print("doing it")
+        return jsonify({"status": " has been added to your account!"})
+    else:
+        return jsonify({"status": " is already on your account with either a matching pgn or name as the one you tried to submit."})
+
+@app.route("/delete_op", methods=["GET", "POST"])
+def delete_op():
+    pass
+    #user_id = current_user.id
+    #Opening.query.filter_by(user_id=user_id,name=name).remove()
+
