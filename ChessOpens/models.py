@@ -31,10 +31,9 @@ class Opening(db.Model):
 
     def addChild(self, pgn, name, user_id):
         opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip(), user_id=user_id)
-        self.children
         db.session.add(opening)
         db.session.commit()
-
+    
     def getMoves(self):
         moves = self.pgn.split(" ")
         del moves[::3]
@@ -65,14 +64,14 @@ class User(db.Model, UserMixin):
 def addOpening(pgn, name, root=None, user_id=None):
     if root is None:
         root = Opening.query.first()
-    #if there are no more nodes
+   # if there are no more nodes
     if not root.hasChildren():
         root.addChild(pgn, name, user_id)
     else:
         #check if a substring of pgn exists
         matching_op = None
         for opening in root.children:
-            if opening.pgn in pgn:
+            if opening.pgn in pgn[:len(opening.pgn)]:
                 matching_op = opening
                 break
         #if there are no children that match the pgn

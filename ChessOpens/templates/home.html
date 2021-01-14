@@ -148,15 +148,16 @@
     <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
     <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+    <script>
+      var op_data = {{ op_data| tojson }}
+      updateBoard()
+    </script>
 
     <div
       class="d-flex flex-column mb-3 align-items-lg-start"
       style="margin-right: 3%"
     >
       <div id="myBoard" class="flex-lg-row" style="width: 500px"></div>
-      <script>
-        var op_data = {{ op_data| tojson }}
-      </script>
 
       <div
         class="d-flex flex-row mb-3 align-items-lg-start"

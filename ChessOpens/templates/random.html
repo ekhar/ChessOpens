@@ -10,12 +10,9 @@
 
 <blockquote class="blockquote text-center" style="margin: 20px">
   <p class="mb-0">
-    The opening is the only phase that holds out the potential for true
-    creativity and doing something entirely new.
+    Set a base opening and play angainst computer moves within our database.
+    Reset back to the base once the end of the opening tree is reached.
   </p>
-  <footer class="blockquote-footer">
-    Garry Kasparov<cite title="Source Title"> (2010)</cite>
-  </footer>
 </blockquote>
 
 <div
@@ -143,7 +140,8 @@
         <li
           class="list-group-item list-group-item-success list-group-item-action"
           style="display: inline"
-          id="setBase"
+          id="Base"
+          onclick="setBase()"
         >
           Set as Base Opening
         </li>
@@ -212,11 +210,32 @@
       $("#CompMoves").on("click", function () {
         makeRandomMove();
       });
-      $("#setBase").on("click", function () {
-        playing_random = true;
-        base_id = id;
-        base_pgn = game.pgn();
-      });
+      function setBase() {
+        if (!playing_random) {
+          playing_random = true;
+          base_id = id;
+          base_pgn = game.pgn();
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-danger list-group-item-action"
+          );
+          $("#Base").html("Unbind Base Opening");
+          $("#Base").attr("onclick", "unsetBase()");
+        }
+      }
+      function unsetBase() {
+        if (playing_random) {
+          playing_random = false;
+          base_id = 1;
+          base_pgn = "";
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-success list-group-item-action"
+          );
+          $("#Base").html("Set Base Opening");
+          $("#Base").attr("onclick", "setBase()");
+        }
+      }
     </script>
     {# end Chess board #}
   </div>

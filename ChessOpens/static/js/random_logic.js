@@ -31,7 +31,7 @@ function makeRandomMove() {
   var possibleMoves = legalmoves;
 
   // game over
-  if (possibleMoves.length === 0) return;
+  if (possibleMoves.length === 0 || !playing_random) return;
 
   var randomIdx = Math.floor(Math.random() * possibleMoves.length);
   game.move(possibleMoves[randomIdx]);
@@ -112,7 +112,7 @@ function updateStatus() {
     //resetting due to completed opening
     if (legalmoves.length === 0 && playing_random) {
       legalmoves = "End of Database Moves";
-      //loadboard(base_id, base_pgn);
+      loadboard(base_id, base_pgn);
     }
     $legalmoves.html(String(legalmoves));
   });

@@ -16,11 +16,12 @@ from flask_login import login_user, current_user, login_required
 def home():
     #set node_id up with origin's id
     id = 1
-    move_number = 0
-    pgn = Opening.query.first().pgn
+    move_number = 1 
+    pgn = "" 
     # all possible moves
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
+    print(db_moves)
     op_name = Opening.query.get(id).name
     if current_user.is_authenticated:
         openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
@@ -44,6 +45,8 @@ def update_nodes():
     if request.method == "POST":
         #pull info from js query
         pgn = request.get_json()["pgn"]
+        if pgn=="":
+            pgn = "1."
         id = request.get_json()["id"]
         fen = request.get_json()["fen"]
         moves = pgn.split(" ")
@@ -61,14 +64,16 @@ def update_nodes():
         
         #gets node_id to properly update
         if current_user.is_authenticated:
-            id = change_node(pgn, current_user.id)
+            id = change_node(pgn, id, current_user.id)
         else:
-            id = change_node(pgn)
+            id = change_node(pgn,id)
         node = Opening.query.get(id)
         if current_user.is_authenticated:
             db_moves = get_all_possible(id, move_number, pgn, current_user.id)[0]
         else:
             db_moves = get_all_possible(id,move_number,pgn)[0]
+            print("ID")
+            print(id)
         return jsonify({
             "op_name": node.name,
             "db_moves": list(db_moves),
