@@ -55,52 +55,40 @@
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
+          <li class="nav-item">
             <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              id="navbarDropdown"
-              role="button"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="false"
+          <li class="nav-item">
+            <a class="nav-link" href="{{url_for('specific')}}"
+              >Memorize Opening</a
             >
-              Practice
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#"
-                >Practice Specific Opening Combination</a
-              >
-              <a class="dropdown-item" href="#"
-                >Practice Angainst Varying Opening Moves</a
-              >
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Something else here</a>
-            </div>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Explore Opening</a>
+            <a class="nav-link" href="{{url_for('random')}}"
+              >Practice Angainst Opening Moves</a
+            >
           </li>
+          {% if current_user.is_authenticated%}
           <li class="nav-item">
-            <a class="nav-link" href="#">Account</a>
+            <a href="{{url_for('create_page')}}" class="nav-link"
+              >Create Opening</a
+            >
           </li>
-          <li class="nav-item">
-            <a data-trigger="hover" class="nav-link disabled">Endgames</a>
-          </li>
-          {% if current_user.is_authenticated %}
-          <span class="navbar-text">
-            <a href="{{url_for('logout')}}">Logout</a>
-          </span>
           {%else%}
-          <span class="navbar-text">
-            <a href="{{url_for('login')}}">Login</a>
-          </span>
-          <span class="navbar-text">
-            <a href="{{url_for('register')}}">Register</a>
-          </span>
+          <li class="nav-item">
+            <a href="{{url_for('login')}}" class="nav-link">Create Opening</a>
+          </li>
+          {%endif%} {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{{url_for('logout')}}" class="nav-link">Logout</a>
+          </li>
+          {%else%}
+          <li class="nav-item">
+            <a href="{{url_for('login')}}" class="nav-link">Login</a>
+          </li>
+          <li class="nav-item">
+            <a href="{{url_for('register')}}" class="nav-link">Register</a>
+          </li>
           {%endif%}
         </ul>
       </div>

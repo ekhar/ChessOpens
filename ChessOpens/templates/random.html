@@ -4,8 +4,6 @@
 <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
 
-<script src="{{url_for('static',filename='js/home.js')}}"></script>
-
 <script src="{{url_for('static', filename='js/searching.js')}}"></script>
 <script src="{{url_for('static', filename='js/favorite.js')}}"></script>
 <script src="{{url_for('static', filename='js/boardlogic.js')}}"></script>
@@ -142,6 +140,13 @@
           Status:
           <div id="status"></div>
         </li>
+        <li
+          class="list-group-item list-group-item-success list-group-item-action"
+          style="display: inline"
+          id="setBase"
+        >
+          Set as Base Opening
+        </li>
       </ul>
     </div>
     {# end board info #} {# Chess board #}
@@ -185,10 +190,17 @@
         >
           Black orientation
         </button>
+        <button
+          style="margin: 0.5%"
+          class="btn btn-secondary btn-sm"
+          id="CompMoves"
+        >
+          Begin Computer Moves
+        </button>
       </div>
     </div>
 
-    <script src="{{url_for('static',filename='js/home.js')}}"></script>
+    <script src="{{url_for('static',filename='js/random_logic.js')}}"></script>
     <script>
       $("#whiteOrientationBtn").on("click", function () {
         board.orientation("white");
@@ -196,6 +208,14 @@
 
       $("#blackOrientationBtn").on("click", function () {
         board.orientation("black");
+      });
+      $("#CompMoves").on("click", function () {
+        makeRandomMove();
+      });
+      $("#setBase").on("click", function () {
+        playing_random = true;
+        base_id = id;
+        base_pgn = game.pgn();
       });
     </script>
     {# end Chess board #}

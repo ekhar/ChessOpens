@@ -4,8 +4,6 @@
 <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
 
-<script src="{{url_for('static',filename='js/home.js')}}"></script>
-
 <script src="{{url_for('static', filename='js/searching.js')}}"></script>
 <script src="{{url_for('static', filename='js/favorite.js')}}"></script>
 <script src="{{url_for('static', filename='js/boardlogic.js')}}"></script>
@@ -77,7 +75,9 @@
           Custom Openings
         </button>
       </div>
-      {#Favorites and Customs end #}
+      {#Favorites and Customs end #} {% if not current_user.is_authenticated%}
+      <small>*login to favorite and create your own openings*</small>
+      {%endif%}
 
       <ul
         id="op_list"
@@ -96,7 +96,7 @@
           class="list-group-item list-group-item-action"
         >
           <label for="id-of-input" class="custom-checkbox">
-            {# favorites button #} {% if
+            {%if current_user.is_authenticated%} {# favorites button #} {% if
             current_user.favorites.filter_by(id=opening.id).first() is none%}
             <button
               id="favorite_button{{opening.id}}"
@@ -113,7 +113,7 @@
             >
               Unfavorite
             </button>
-            {%endif%}
+            {%endif%} {%endif%}
 
             <span>{{opening.name}}</span>
           </label>
@@ -175,17 +175,46 @@
         var op_data = {{ op_data| tojson }}
       </script>
 
-      <button
-        type="button"
-        class="btn btn-secondary btn-sm"
-        style="margin-top: 0.5%"
-        onclick="undomoveBoard()"
+      <div
+        class="d-flex flex-row mb-3 align-items-lg-start"
+        style="margin: 0.5%"
       >
-        Undo Move
-      </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          style="margin: 0.5%"
+          onclick="undomoveBoard()"
+        >
+          Undo Move
+        </button>
+
+        <button
+          style="margin: 0.5%"
+          class="btn btn-secondary btn-sm"
+          id="whiteOrientationBtn"
+        >
+          White orientation
+        </button>
+        <button
+          style="margin: 0.5%"
+          class="btn btn-secondary btn-sm"
+          id="blackOrientationBtn"
+        >
+          Black orientation
+        </button>
+      </div>
     </div>
 
     <script src="{{url_for('static',filename='js/home.js')}}"></script>
+    <script>
+      $("#whiteOrientationBtn").on("click", function () {
+        board.orientation("white");
+      });
+
+      $("#blackOrientationBtn").on("click", function () {
+        board.orientation("black");
+      });
+    </script>
     {# end Chess board #}
   </div>
 </div>

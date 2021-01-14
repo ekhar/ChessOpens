@@ -12,6 +12,7 @@ function create_opening(name) {
   });
   req.done(function (data) {
     a = data.status;
+    console.log(a);
+    alert("Opening - " + name + a);
   });
-  alert("Opening - " + name + a);
 }

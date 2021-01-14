@@ -8,7 +8,12 @@ var legalmoves = op_data.legalmoves;
 var $legalmoves = $("#legalmoves");
 var id = op_data.id;
 var parent_id = op_data.parent_id;
-console.log(parent_id);
+var player_color = "w";
+var computer_move;
+var playing_random = false;
+
+var base_id = id;
+var base_pgn;
 
 function onDragStart(source, piece, position, orientation) {
   // do not pick up pieces if the game is over
@@ -21,6 +26,17 @@ function onDragStart(source, piece, position, orientation) {
   ) {
     return false;
   }
+}
+function makeRandomMove() {
+  var possibleMoves = legalmoves;
+
+  // game over
+  if (possibleMoves.length === 0) return;
+
+  var randomIdx = Math.floor(Math.random() * possibleMoves.length);
+  game.move(possibleMoves[randomIdx]);
+  board.position(game.fen());
+  updateStatus();
 }
 
 function onDrop(source, target) {
@@ -35,16 +51,16 @@ function onDrop(source, target) {
   if (move === null) return "snapback";
   //-----------------------FOR RANDOM PLAY----------------------------------
   //compares move to allowed moves in the position
-  //if (!legalmoves.includes(move.san) && legalmoves.length > 0) {
-  //  game.undo();
-  //  console.log("not legal");
-  //$legalmoves.html("Moves in our database include: " + String(legalmoves));
-  //  return "snapback";
-  //}
-  //
+  if (!legalmoves.includes(move.san) && playing_random) {
+    //&& legalmoves.length > 0) {
+    game.undo();
+    return "snapback";
+  }
+
   //valid move has been reached
   $legalmoves.html("");
   updateStatus();
+  window.setTimeout(makeRandomMove, 250);
 }
 
 // update the board position after the piece snap
@@ -93,6 +109,11 @@ function updateStatus() {
     id = data.id;
     parent_id = data.parent_id;
     legalmoves = data.db_moves;
+    //resetting due to completed opening
+    if (legalmoves.length === 0 && playing_random) {
+      legalmoves = "End of Database Moves";
+      //loadboard(base_id, base_pgn);
+    }
     $legalmoves.html(String(legalmoves));
   });
   $status.html(status);
@@ -107,6 +128,6 @@ var config = {
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,
 };
-board = Chessboard("myBoard", config);
 
+board = Chessboard("myBoard", config);
 updateStatus();

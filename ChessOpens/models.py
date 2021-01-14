@@ -30,14 +30,10 @@ class Opening(db.Model):
         return len(self.children) > 0
 
     def addChild(self, pgn, name, user_id):
-        #if Opening.query.filter_by(pgn=pgn.strip()):
-         #   pass
-        if False:
-            pass
-        else:
-            opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip(), user_id=user_id)
-            db.session.add(opening)
-            db.session.commit()
+        opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip(), user_id=user_id)
+        self.children
+        db.session.add(opening)
+        db.session.commit()
 
     def getMoves(self):
         moves = self.pgn.split(" ")

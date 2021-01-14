@@ -4,7 +4,7 @@
   class="list-group-item list-group-item-action"
 >
   <label for="id-of-input" class="custom-checkbox">
-    {# favorites button #} {% if
+    {%if current_user.is_authenticated%} {# favorites button #} {% if
     current_user.favorites.filter_by(id=opening.id).first() is none%}
     <button
       id="favorite_button{{opening.id}}"
@@ -21,41 +21,16 @@
     >
       Unfavorite
     </button>
-    {%endif%}
+    {%endif%} {% if opening.user_id == current_user.id %}
+    <button id="remove_button{{opening.id}}" onclick="remove({{opening.id}})">
+      Delete
+    </button>
+
+    {%endif%} {%endif%}
 
     <span>{{opening.name}}</span>
   </label>
   <div class="text-truncate"><small>{{opening.pgn}}</small></div>
 </li>
 {%endfor%}
-<script>
-  function favorite(op_id) {
-    console.log(op_id);
-    req = $.ajax({
-      type: "POST",
-      url: "/favorite",
-      data: JSON.stringify({ opening_id: op_id, current_url: "/home" }), //, op_id = opening_id, op_data, db_moves = legalmoves, id = id, parent_id=parent_id }),
-      contentType: "application/json",
-    });
-    req.done(function (data) {
-      let name = "#favorite_button" + data.id;
-      $(name).html("");
-      $(name).append(data.status);
-    });
-  }
-
-  function unfavorite(op_id) {
-    console.log(op_id);
-    req = $.ajax({
-      type: "POST",
-      url: "/unfavorite",
-      data: JSON.stringify({ opening_id: op_id, current_url: "/home" }), //, op_id = opening_id, op_data, db_moves = legalmoves, id = id, parent_id=parent_id }),
-      contentType: "application/json",
-    });
-    req.done(function (data) {
-      let name = "#favorite_button" + data.id;
-      $(name).html("");
-      $(name).append(data.status);
-    });
-  }
-</script>
+<script src="{{url_for('static', filename='js/favorite.js')}}"></script>

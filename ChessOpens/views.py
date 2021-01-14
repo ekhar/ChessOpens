@@ -1,4 +1,6 @@
-from flask import flash,render_template, url_for, jsonify, redirect,session, request
+from flask import flash,render_template, url_for, jsonify, redirect,session, request, g
+from sqlalchemy import or_
+from functools import wraps
 from flask_session import Session
 from ChessOpens import app, db, oauth, bcrypt
 from ChessOpens.models import Opening, User, addOpening
@@ -6,7 +8,8 @@ from ChessOpens.application import change_node, get_all_possible
 from ChessOpens.forms import RegistrationForm, LoginForm
 import re
 import os
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, login_required
+
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -19,7 +22,11 @@ def home():
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
     op_name = Opening.query.get(id).name
-    openings = Opening.query.filter_by(user_id=None)
+    if current_user.is_authenticated:
+        openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
+    else:
+        openings = Opening.query.filter(Opening.user_id==None).all()
+
     return render_template("home.html",
                            op_data={
                                "op_name": op_name,
@@ -38,6 +45,7 @@ def update_nodes():
         #pull info from js query
         pgn = request.get_json()["pgn"]
         id = request.get_json()["id"]
+        fen = request.get_json()["fen"]
         moves = pgn.split(" ")
         #find the last period in pgn bc move numbers always before period in pgn
         if (len(pgn) == 0):
@@ -45,17 +53,22 @@ def update_nodes():
         #black just moved
         elif len(pgn.split(" ")) % 3 <= 1:
             #regex to find third to last number
-            move_number = 2 * int(re.findall(r'\d+', pgn)[-3])
+            move_number = 2 * (int(fen.split()[-1]))-1
         #white just moved
         else:
             #regex to find second to last number
-            move_number = 2 *int(re.findall(r'\d+', pgn)[-2])- 1
+            move_number = 2 *(int(fen.split()[-1]))
         
         #gets node_id to properly update
-        id = change_node(id, move_number, pgn)
+        if current_user.is_authenticated:
+            id = change_node(pgn, current_user.id)
+        else:
+            id = change_node(pgn)
         node = Opening.query.get(id)
-        db_moves = get_all_possible(id, move_number, pgn)[0]
-
+        if current_user.is_authenticated:
+            db_moves = get_all_possible(id, move_number, pgn, current_user.id)[0]
+        else:
+            db_moves = get_all_possible(id,move_number,pgn)[0]
         return jsonify({
             "op_name": node.name,
             "db_moves": list(db_moves),
@@ -65,17 +78,22 @@ def update_nodes():
 
 @app.route('/search', methods=["GET", "POST"])
 def search():
-    print("hello")
     if request.method == "POST":
         name = request.get_json()["str_name"]
         search1 = "%{0}%".format(name)
         #include () in searches
         search2 = "%({})%".format(name)
         
-        name_results = Opening.query.filter(Opening.name.like(search1)).all()
-        
-        name_results2 = Opening.query.filter(Opening.name.like(search2)).all()
-        pgn_results =  Opening.query.filter(Opening.pgn.like(search1)).all()
+        if current_user.is_authenticated:
+
+            name_results = Opening.query.filter(Opening.name.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id) ).all()
+            name_results2 = Opening.query.filter(Opening.name.like(search2), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
+            pgn_results =  Opening.query.filter(Opening.pgn.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
+
+        else:
+            name_results = Opening.query.filter(Opening.name.like(search1)).all()
+            name_results2 = Opening.query.filter(Opening.name.like(search2)).all()
+            pgn_results =  Opening.query.filter(Opening.pgn.like(search1)).all()
 
         openings = name_results+pgn_results + name_results2 
         
@@ -110,6 +128,7 @@ def authorize():
     return redirect('/')
 
 @app.route('/logout')
+@login_required
 def logout():
     for key in list(session.keys()):
         session.pop(key)
@@ -147,6 +166,7 @@ def login():
 
 
 @app.route("/favorite", methods=['GET', 'POST'])
+@login_required
 def favorite():
     if request.method == "POST":
         opening_id = request.get_json()["opening_id"]
@@ -163,6 +183,7 @@ def favorite():
 
 
 @app.route("/unfavorite", methods=['GET', 'POST'])
+@login_required
 def unfavorite():
     if request.method == "POST":
         opening_id = request.get_json()["opening_id"]
@@ -176,6 +197,7 @@ def unfavorite():
 
 
 @app.route("/view_favorites", methods=['GET', 'POST'])
+@login_required
 def view_favorites():
     fav_list = current_user.favorites.all()
     return jsonify({"data": render_template("/searchop.html",openings = fav_list)})
@@ -183,10 +205,12 @@ def view_favorites():
 @app.route("/view_all", methods=['GET', 'POST'])
 def view_all():
     openings = Opening.query.filter_by(user_id=None).all()
-    openings += Opening.query.filter_by(user_id=current_user.id).all()
+    if current_user.is_authenticated:
+        openings += Opening.query.filter_by(user_id=current_user.id).all()
     return jsonify({"data": render_template("/searchop.html",openings = openings)})
 
 @app.route("/view_custom", methods=['GET', 'POST'])
+@login_required
 def view_custom():
     user_id = current_user.id
     openings = User.query.get(user_id).custom_op
@@ -194,6 +218,7 @@ def view_custom():
 
 
 @app.route("/create", methods=["GET", "POST"])
+@login_required
 def create_page():
     #set node_id up with origin's id
     id = 1
@@ -216,6 +241,7 @@ def create_page():
                            )
 
 @app.route("/create_op", methods=["GET", "POST"])
+@login_required
 def create_op():
     user_id = current_user.id
     name = request.get_json()["name"]
@@ -225,11 +251,98 @@ def create_op():
         print("doing it")
         return jsonify({"status": " has been added to your account!"})
     else:
-        return jsonify({"status": " is already on your account with either a matching pgn or name as the one you tried to submit."})
+        return jsonify({"status": " is already on your account with either a matching pgn or name (or blank name) as the one you tried to submit."})
 
 @app.route("/delete_op", methods=["GET", "POST"])
+@login_required
 def delete_op():
-    pass
+    id = request.get_json()["id"]
+    if Opening.query.get(id).user_id == current_user.id:
+        Opening.query.filter_by(id=id).delete()
+        db.session.commit()
+    return redirect(url_for('view_custom'))
     #user_id = current_user.id
     #Opening.query.filter_by(user_id=user_id,name=name).remove()
 
+
+@app.route("/random", methods=["GET", "POST"])
+def random():
+    if current_user.is_authenticated:
+        openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
+    else:
+        openings = Opening.query.filter(Opening.user_id==None).all()
+    
+    id=1
+    move_number=0
+    op_name = Opening.query.get(id).name
+    pgn = Opening.query.first().pgn
+    db_moves = get_all_possible(id, move_number, pgn)[0]
+    return render_template("/random.html",
+                           op_data={
+                               "op_name": op_name,
+                               "db_moves": list(db_moves),
+                               "id": id,
+                               "parent_id": 0
+                           },
+                           openings=openings,
+                           op = Opening
+                           )
+                           
+
+@app.route("/specific", methods=["GET", "POST"])
+def specific():
+    if current_user.is_authenticated:
+        openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
+    else:
+        openings = Opening.query.filter(Opening.user_id==None).all()
+    
+    id=1
+    move_number=0
+    op_name = Opening.query.get(id).name
+    pgn = Opening.query.first().pgn
+    db_moves = get_all_possible(id, move_number, pgn)[0]
+    return render_template("/specific.html",
+                           op_data={
+                               "op_name": op_name,
+                               "db_moves": list(db_moves),
+                               "id": id,
+                               "parent_id": 0
+                           },
+                           openings=openings,
+                           op = Opening
+                           )
+
+
+@app.route('/undo', methods=["GET", "POST"])
+def undo():
+    if request.method == "POST":
+        #pull info from js query
+        pgn = request.get_json()["pgn"]
+        opening = Opening.query.filter_by(pgn=pgn).first()
+        name = opening.name
+        id = opening.id
+        parent_id = opening.parent_id
+        
+        fen = request.get_json()["fen"]
+        moves = pgn.split(" ")
+
+        #black just moved
+        if len(pgn.split(" ")) % 3 <= 1:
+            #regex to find third to last number
+            move_number = 2 * (int(fen.split()[-1]))-1
+        #white just moved
+        else:
+            #regex to find second to last number
+            move_number = 2 *(int(fen.split()[-1]))
+
+        if current_user.is_authenticated:
+            db_moves = get_all_possible(id, move_number, pgn, current_user.id)[0]
+        else:
+            db_moves = get_all_possible(id,move_number,pgn)[0]
+
+        return jsonify({
+            "op_name": opening.name,
+            "db_moves": list(db_moves),
+            "id": id,
+            "parent_id": parent_id
+        })
