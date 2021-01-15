@@ -112,13 +112,19 @@ function updateStatus() {
     //resetting due to completed opening
     if (legalmoves.length === 0 && playing_random) {
       legalmoves = "End of Database Moves";
-      loadboard(base_id, base_pgn);
+      sleep(1800).then(() => {
+        // Do something after the sleep!
+        loadboard(base_id, base_pgn);
+      });
     }
     $legalmoves.html(String(legalmoves));
   });
   $status.html(status);
   $fen.html(game.fen());
   $pgn.html(game.pgn());
+}
+function sleep(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 var config = {

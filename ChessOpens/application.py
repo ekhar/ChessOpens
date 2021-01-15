@@ -31,10 +31,7 @@ def get_all_possible(node_id, move_number, pgn,user_id=None):
     node = Opening.query.get(node_id)
     node_list = []
     str_set = set()
-    print("MOVE NUMBER")
-    print(move_number)
     if len(node.getMoves()) > move_number:
-        print(move_number)
         str_set.add(node.getMoves()[move_number-1])
         node_list.append(node.id)
     #if the node's pgn has been reached and it has children

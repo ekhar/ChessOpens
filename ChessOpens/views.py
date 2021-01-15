@@ -21,7 +21,6 @@ def home():
     # all possible moves
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
-    print(db_moves)
     op_name = Opening.query.get(id).name
     if current_user.is_authenticated:
         openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
@@ -39,6 +38,42 @@ def home():
                            op = Opening
                            )
 
+
+@app.route('/update_specific', methods=["GET", "POST"])
+def update_nodes_specific():
+    if request.method == "POST":
+        #pull info from js query
+        pgn = request.get_json()["pgn"]
+        if pgn=="":
+            pgn = "1."
+        fen = request.get_json()["fen"]
+        moves = pgn.split(" ")
+        #find the last period in pgn bc move numbers always before period in pgn
+        if (len(pgn) == 0):
+            move_number = 0
+        #black just moved
+        elif len(pgn.split(" ")) % 3 <= 1:
+            #regex to find third to last number
+            move_number = 2 * (int(fen.split()[-1]))-1
+        #white just moved
+        else:
+            #regex to find second to last number
+            move_number = 2 *(int(fen.split()[-1]))
+        
+        if current_user.is_authenticated:
+            id = change_node(pgn, id, current_user.id)
+        else:
+            id = change_node(pgn,id)
+        node = Opening.query.get(id)
+        db_moves = moves[move_number]
+        print("DB MOVES")
+        print(db_moves)
+        return jsonify({
+            "op_name": node.name,
+            "db_moves": list(db_moves),
+            "id": id,
+            "parent_id": node.parent_id
+        })
 
 @app.route('/update', methods=["GET", "POST"])
 def update_nodes():
@@ -72,8 +107,7 @@ def update_nodes():
             db_moves = get_all_possible(id, move_number, pgn, current_user.id)[0]
         else:
             db_moves = get_all_possible(id,move_number,pgn)[0]
-            print("ID")
-            print(id)
+
         return jsonify({
             "op_name": node.name,
             "db_moves": list(db_moves),
@@ -107,7 +141,6 @@ def search():
 
 @app.route('/logingoogle', methods=["GET"])
 def logingoogle():
-    print("HELLO")
     google = oauth.create_client('google')  # create the google oauth client
     redirect_uri = url_for('authorize', _external=True)
     return google.authorize_redirect(redirect_uri)
@@ -121,7 +154,6 @@ def authorize():
     user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
     # Here you use the profile/user data that you got and query your database find/register the user
     # and set ur own data in the session not the profile from google
-    print(user_info["email"])
     if not User.query.filter_by(email=user_info["email"]).first():
         user = User(email=user_info["email"], password=bcrypt.generate_password_hash(str(os.urandom(12))).decode('utf-8'))
         db.session.add(user)
@@ -177,13 +209,9 @@ def favorite():
         opening_id = request.get_json()["opening_id"]
         user_id = current_user.id
         opening = Opening.query.get(opening_id)
-        print(opening_id)
-        print(current_user.favorites.filter_by(id=opening_id).first())
         if current_user.favorites.filter_by(id=opening_id).first() is None:
             User.query.get(user_id).favorites.append(opening)
             db.session.commit()
-            print("RUNNING")
-            print(User.query.get(user_id).favorites.all())
             return jsonify({"id": opening.id, "status": "Unfavorite"})
 
 
@@ -196,8 +224,6 @@ def unfavorite():
         opening = Opening.query.get(opening_id)
         User.query.get(user_id).favorites.remove(opening)
         db.session.commit()
-        print("RUNNING")
-        print(User.query.get(user_id).favorites.all())
         return jsonify({"id": opening.id, "status": "Favorite"})
 
 
@@ -253,7 +279,6 @@ def create_op():
     pgn = request.get_json()["pgn"]
     if(Opening.query.filter_by(name=name, user_id=user_id).first() is None and Opening.query.filter_by(pgn=pgn, user_id=user_id).first() is None and name.strip() != ""):
         addOpening(name=name,pgn=pgn, user_id=user_id)
-        print("doing it")
         return jsonify({"status": " has been added to your account!"})
     else:
         return jsonify({"status": " is already on your account with either a matching pgn or name (or blank name) as the one you tried to submit."})
