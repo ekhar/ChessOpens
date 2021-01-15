@@ -31,10 +31,9 @@ class Opening(db.Model):
 
     def addChild(self, pgn, name, user_id):
         opening = Opening(parent_id=self.id, name=name.strip(), pgn=pgn.strip(), user_id=user_id)
-        self.children
         db.session.add(opening)
         db.session.commit()
-
+    
     def getMoves(self):
         moves = self.pgn.split(" ")
         del moves[::3]
@@ -61,7 +60,6 @@ class User(db.Model, UserMixin):
     custom_op = db.relationship("Opening", backref=db.backref("user_custom", uselist='false'))
 
 
-
 def addOpening(pgn, name, root=None, user_id=None):
     if root is None:
         root = Opening.query.first()
@@ -84,3 +82,54 @@ def addOpening(pgn, name, root=None, user_id=None):
         #else recurse using the node that matches pgn
         else:
             addOpening(pgn, name, root=matching_op, user_id=user_id)
+
+#levels to the tree could be descrbed a len(opening.moves)
+def order_tree(level=0,node=None):
+    if node is None:
+        node = Opening.query.get(1)
+    queue = []
+    visited=[]
+    visited.append(node)
+    queue.append(node)
+    count = 0
+    while queue:
+        count+=1
+        s = queue.pop(0) 
+        
+        #addOpening(s.name,s.pgn,premade_op=s)
+        
+        for child in s.children:
+            if child not in visited:
+                visited.append(child)
+                queue.append(child)
+
+
+    #order_tree(level=level,root=child)
+
+def bfs(node):
+    queue = []
+    visited=[]
+    visited.append(node)
+    queue.append(node)
+    count = 0
+    while queue:
+        count+=1
+        s = queue.pop(0) 
+        print (s, end = " ") 
+        
+        for child in s.children:
+            if child not in visited:
+                visited.append(child)
+                queue.append(child)
+    print(count)
+
+#if opening does not match its level then breadth wide search to see if another opening's pgn is a substring of it
+    #if this is true
+        # recursivley delete opening and children
+        # re-add opening to the tree 
+        # restart this whole method
+        #------or-------
+        #Change openings parent id to where it should be added
+    #if this is not true
+        #keep checking this until level len(node.moves) == len(opening.moves)
+        #then pass

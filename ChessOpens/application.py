@@ -8,8 +8,11 @@ def check_valid_move(node, move, move_number, pgn):
     return move in all_moves
 
 
-def change_node(pgn, user_id=None):
-    node = Opening.query.filter(Opening.pgn == pgn, or_(Opening.user_id == None, Opening.user_id==user_id))# Opening.user_id == user_id))
+def change_node(pgn,old_id, user_id=None):
+    node = Opening.query.filter(Opening.pgn == pgn, or_(Opening.user_id == None, Opening.user_id==user_id))
+    #node = Opening.query.filter(Opening.pgn.like("{}%".format(pgn)), or_(Opening.user_id == None, Opening.user_id==user_id))# Opening.user_id == user_id))
+    if node.first() is None:
+        return old_id
     return node.first().id
 #    node = Opening.query.get(node_id)
 #    #if move is contained in current node
@@ -25,13 +28,11 @@ def change_node(pgn, user_id=None):
 
 #returns string set as well as node list
 def get_all_possible(node_id, move_number, pgn,user_id=None):
-    print(move_number)
     node = Opening.query.get(node_id)
     node_list = []
     str_set = set()
-    print("running")
     if len(node.getMoves()) > move_number:
-        str_set.add(node.getMoves()[move_number])
+        str_set.add(node.getMoves()[move_number-1])
         node_list.append(node.id)
     #if the node's pgn has been reached and it has children
     if node.hasChildren():

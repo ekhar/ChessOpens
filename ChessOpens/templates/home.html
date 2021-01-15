@@ -41,12 +41,15 @@
           type="text"
           placeholder="Search"
           aria-label="Search"
-          onkeyup="searchbar(this.value)"
+          onkeyup="counter=0;scroll_search(this.value); "
         />
       </form>
       {# end search bar #} {# Favorite and Customs Begin #}
       <div class="d-flex flex-row mb-3 align-items-center">
-        <button class="btn btn-outline-secondary" onclick="view_all()">
+        <button
+          class="btn btn-outline-secondary"
+          onclick="counter=0; scroll_all(); "
+        >
           All Openings
         </button>
         <button class="btn btn-outline-secondary" onclick="view_favorites()">
@@ -72,37 +75,7 @@
           margin-left: 30px;
         "
       >
-        {% for opening in openings %}
-        <li
-          onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
-          class="list-group-item list-group-item-action"
-        >
-          <label for="id-of-input" class="custom-checkbox">
-            {%if current_user.is_authenticated%} {# favorites button #} {% if
-            (current_user.is_authenticated) and
-            current_user.favorites.filter_by(id=opening.id).first() is none%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="favorite( {{opening.id}} )"
-            >
-              Favorite
-            </button>
-            {%else%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="unfavorite( {{opening.id}} )"
-            >
-              Unfavorite
-            </button>
-            {%endif%} {%endif%}
-
-            <span>{{opening.name}}</span>
-          </label>
-          <div class="text-truncate"><small>{{opening.pgn}}</small></div>
-        </li>
-        {%endfor%}
+        <div id="sentinal">loading</div>
       </ul>
       <div style="max-width: 220px">
         <small style="overflow-wrap: break-word"
@@ -113,7 +86,7 @@
     </div>
     {# end all opening names #} {# board info #}
     <div
-      class="d-flex flex-column mb-3 align-items-center align-self-center order-1"
+      class="d-flex flex-lg-row flex-column mb-3 align-items-center align-self-center order-1"
     >
       <ul
         class="list-group flex-column"
@@ -148,15 +121,16 @@
     <link rel="stylesheet" href="static/css/chessboard-1.0.0.css" />
     <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+    <script>
+      var op_data = {{ op_data| tojson }}
+      updateBoard()
+    </script>
 
     <div
       class="d-flex flex-column mb-3 align-items-lg-start"
       style="margin-right: 3%"
     >
       <div id="myBoard" class="flex-lg-row" style="width: 500px"></div>
-      <script>
-        var op_data = {{ op_data| tojson }}
-      </script>
 
       <div
         class="d-flex flex-row mb-3 align-items-lg-start"
@@ -189,6 +163,7 @@
     </div>
 
     <script src="{{url_for('static',filename='js/home.js')}}"></script>
+    <script src="{{url_for('static',filename='js/scrolling.js')}}"></script>
     <script>
       $("#whiteOrientationBtn").on("click", function () {
         board.orientation("white");
@@ -197,6 +172,7 @@
       $("#blackOrientationBtn").on("click", function () {
         board.orientation("black");
       });
+      scroll_all();
     </script>
     {# end Chess board #}
   </div>

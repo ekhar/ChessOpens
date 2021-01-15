@@ -1,6 +1,6 @@
 from ChessOpens import db
 
-from ChessOpens.models import Opening,addOpening 
+from ChessOpens.models import Opening,addOpening,order_tree 
 
 try: 
     Opening.query.first()
@@ -34,4 +34,6 @@ except:
         name = d[key]
         addOpening(name=name,pgn=key)
         db.session.commit()
+
+print("DONE INITIAL SETUP")
 

@@ -10,10 +10,9 @@ var id = op_data.id;
 var parent_id = op_data.parent_id;
 var player_color = "w";
 var computer_move;
-var playing_random = false;
+var playing_specific = false;
 
-var base_id = id;
-var base_pgn;
+var base_moves;
 
 function onDragStart(source, piece, position, orientation) {
   // do not pick up pieces if the game is over
@@ -31,7 +30,7 @@ function makeRandomMove() {
   var possibleMoves = legalmoves;
 
   // game over
-  if (possibleMoves.length === 0 || !playing_random) return;
+  if (possibleMoves.length === 0 || !playing_specific) return;
 
   var randomIdx = Math.floor(Math.random() * possibleMoves.length);
   game.move(possibleMoves[randomIdx]);
@@ -49,9 +48,9 @@ function onDrop(source, target) {
 
   // illegal move
   if (move === null) return "snapback";
-  //-----------------------FOR RANDOM PLAY----------------------------------
+  //-----------------------FOR Specific PLAY----------------------------------
   //compares move to allowed moves in the position
-  if (!legalmoves.includes(move.san) && playing_random) {
+  if (!legalmoves.includes(move.san) && playing_specific) {
     //&& legalmoves.length > 0) {
     game.undo();
     return "snapback";
@@ -96,32 +95,57 @@ function updateStatus() {
       status += ", " + moveColor + " is in check";
     }
   }
+  //standard updates
+  if (!playing_specific) {
+    req = $.ajax({
+      type: "POST",
+      url: "/update",
+      data: JSON.stringify({ pgn: game.pgn(), id: id, fen: game.fen() }),
+      contentType: "application/json",
+    });
 
-  req = $.ajax({
-    type: "POST",
-    url: "/update",
-    data: JSON.stringify({ pgn: game.pgn(), id: id, fen: game.fen() }),
-    contentType: "application/json",
-  });
-
-  req.done(function (data) {
-    $name.html(data.op_name);
-    id = data.id;
-    parent_id = data.parent_id;
-    legalmoves = data.db_moves;
-    //resetting due to completed opening
-    if (legalmoves.length === 0 && playing_random) {
+    req.done(function (data) {
+      $name.html(data.op_name);
+      id = data.id;
+      parent_id = data.parent_id;
+      legalmoves = data.db_moves;
+      //resetting due to completed opening
+      if (legalmoves.length === 0 && playing_specific) {
+        legalmoves = "End of Database Moves";
+        sleep(1800).then(() => {
+          // Do something after the sleep!
+          loadboard(base_id, base_pgn);
+        });
+      }
+      $legalmoves.html(String(legalmoves));
+    });
+  } else {
+    let total_moves = 0;
+    let fen = game.fen().split(" ");
+    let turn_num = fen[fen.length - 1];
+    if (game.turn() === "b") {
+      total_moves = 2 * Number(turn_num);
+    } else {
+      total_moves = 2 * Number(turn_num) - 1;
+    }
+    legalmoves = [base_moves[total_moves - 1]];
+    if (
+      base_moves.length < total_moves &&
+      playing_specific &&
+      game.pgn() !== ""
+    ) {
       legalmoves = "End of Database Moves";
       sleep(1800).then(() => {
         // Do something after the sleep!
-        loadboard(base_id, base_pgn);
+        loadboard(1, "1.");
       });
     }
     $legalmoves.html(String(legalmoves));
-  });
-  $status.html(status);
-  $fen.html(game.fen());
-  $pgn.html(game.pgn());
+
+    $status.html(status);
+    $fen.html(game.fen());
+    $pgn.html(game.pgn());
+  }
 }
 function sleep(time) {
   return new Promise((resolve) => setTimeout(resolve, time));

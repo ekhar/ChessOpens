@@ -6,9 +6,8 @@ var $pgn = $("#pgn");
 var $name = $("#name");
 var legalmoves = op_data.legalmoves;
 var $legalmoves = $("#legalmoves");
-var id = op_data.id;
+var id = 1;
 var parent_id = op_data.parent_id;
-console.log(parent_id);
 
 function onDragStart(source, piece, position, orientation) {
   // do not pick up pieces if the game is over

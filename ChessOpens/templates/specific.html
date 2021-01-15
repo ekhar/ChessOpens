@@ -4,20 +4,15 @@
 <script src="{{ url_for('static', filename='js/chessboard-1.0.0.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chess.js') }}"></script>
 
-<script src="{{url_for('static',filename='js/home.js')}}"></script>
-
 <script src="{{url_for('static', filename='js/searching.js')}}"></script>
 <script src="{{url_for('static', filename='js/favorite.js')}}"></script>
 <script src="{{url_for('static', filename='js/boardlogic.js')}}"></script>
 
 <blockquote class="blockquote text-center" style="margin: 20px">
   <p class="mb-0">
-    The opening is the only phase that holds out the potential for true
-    creativity and doing something entirely new.
+    Select an opening as an end goal. Begin computer moves to rapidly practice
+    this specific line.
   </p>
-  <footer class="blockquote-footer">
-    Garry Kasparov<cite title="Source Title"> (2010)</cite>
-  </footer>
 </blockquote>
 
 <div
@@ -34,6 +29,7 @@
       <form
         class="form-inline d-flex justify-content-center md-form form-sm mt-0"
         method="POST"
+        id="searchingform"
       >
         <i class="fas fa-search" aria-hidden="true"></i>
         <input
@@ -41,12 +37,15 @@
           type="text"
           placeholder="Search"
           aria-label="Search"
-          onkeyup="searchbar(this.value)"
+          onkeyup="counter=0;var search = this.value;scroll_search(this.value); "
         />
       </form>
       {# end search bar #} {# Favorite and Customs Begin #}
       <div class="d-flex flex-row mb-3 align-items-center">
-        <button class="btn btn-outline-secondary" onclick="view_all()">
+        <button
+          class="btn btn-outline-secondary"
+          onclick="counter=0; scroll_all(); "
+        >
           All Openings
         </button>
         <button class="btn btn-outline-secondary" onclick="view_favorites()">
@@ -72,37 +71,7 @@
           margin-left: 30px;
         "
       >
-        {% for opening in openings %}
-        <li
-          onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
-          class="list-group-item list-group-item-action"
-        >
-          <label for="id-of-input" class="custom-checkbox">
-            {%if current_user.is_authenticated%} {# favorites button #} {% if
-            (current_user.is_authenticated) and
-            current_user.favorites.filter_by(id=opening.id).first() is none%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="favorite( {{opening.id}} )"
-            >
-              Favorite
-            </button>
-            {%else%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="unfavorite( {{opening.id}} )"
-            >
-              Unfavorite
-            </button>
-            {%endif%} {%endif%}
-
-            <span>{{opening.name}}</span>
-          </label>
-          <div class="text-truncate"><small>{{opening.pgn}}</small></div>
-        </li>
-        {%endfor%}
+        <div id="sentinal">loading</div>
       </ul>
       <div style="max-width: 220px">
         <small style="overflow-wrap: break-word"
@@ -141,6 +110,14 @@
         <li class="list-group-item">
           Status:
           <div id="status"></div>
+        </li>
+        <li
+          class="list-group-item list-group-item-success list-group-item-action"
+          style="display: inline"
+          id="Base"
+          onclick="setBase()"
+        >
+          Set as Opening
         </li>
       </ul>
     </div>
@@ -185,10 +162,18 @@
         >
           Black orientation
         </button>
+        <button
+          style="margin: 0.5%"
+          class="btn btn-secondary btn-sm"
+          id="CompMoves"
+        >
+          Begin Computer Moves
+        </button>
       </div>
     </div>
 
-    <script src="{{url_for('static',filename='js/home.js')}}"></script>
+    <script src="{{url_for('static',filename='js/specific.js')}}"></script>
+    <script src="{{url_for('static',filename='js/scrolling.js')}}"></script>
     <script>
       $("#whiteOrientationBtn").on("click", function () {
         board.orientation("white");
@@ -197,6 +182,44 @@
       $("#blackOrientationBtn").on("click", function () {
         board.orientation("black");
       });
+      $("#CompMoves").on("click", function () {
+        makeRandomMove();
+      });
+      function setBase() {
+        if (!playing_specific) {
+          playing_specific = true;
+          legal_moves = game.pgn().split(" ");
+          legal_moves.shift();
+          //select every third item, and do NOT include it in the final list
+          base_moves = legal_moves.filter((e, i) => i % 3 !== 2);
+          game.reset();
+          board.position(game.fen());
+          legalmoves = base_moves[0];
+          $legalmoves.html(legalmoves);
+          updateStatus();
+
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-danger list-group-item-action"
+          );
+          $("#Base").html("Unbind Opening");
+          $("#Base").attr("onclick", "unsetBase()");
+        }
+      }
+      function unsetBase() {
+        if (playing_specific) {
+          playing_specific = false;
+          base_id = 1;
+          base_pgn = "";
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-success list-group-item-action"
+          );
+          $("#Base").html("Set Opening");
+          $("#Base").attr("onclick", "setBase()");
+        }
+      }
+      scroll_all();
     </script>
     {# end Chess board #}
   </div>

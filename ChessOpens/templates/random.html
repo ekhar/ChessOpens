@@ -10,12 +10,9 @@
 
 <blockquote class="blockquote text-center" style="margin: 20px">
   <p class="mb-0">
-    The opening is the only phase that holds out the potential for true
-    creativity and doing something entirely new.
+    Set a base opening and play angainst computer moves within our database.
+    Reset back to the base once the end of the opening tree is reached.
   </p>
-  <footer class="blockquote-footer">
-    Garry Kasparov<cite title="Source Title"> (2010)</cite>
-  </footer>
 </blockquote>
 
 <div
@@ -39,12 +36,15 @@
           type="text"
           placeholder="Search"
           aria-label="Search"
-          onkeyup="searchbar(this.value)"
+          onkeyup="counter=0;scroll_search(this.value); "
         />
       </form>
       {# end search bar #} {# Favorite and Customs Begin #}
       <div class="d-flex flex-row mb-3 align-items-center">
-        <button class="btn btn-outline-secondary" onclick="view_all()">
+        <button
+          class="btn btn-outline-secondary"
+          onclick="counter=0; scroll_all(); "
+        >
           All Openings
         </button>
         <button class="btn btn-outline-secondary" onclick="view_favorites()">
@@ -70,37 +70,7 @@
           margin-left: 30px;
         "
       >
-        {% for opening in openings %}
-        <li
-          onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
-          class="list-group-item list-group-item-action"
-        >
-          <label for="id-of-input" class="custom-checkbox">
-            {%if current_user.is_authenticated%} {# favorites button #} {% if
-            (current_user.is_authenticated) and
-            current_user.favorites.filter_by(id=opening.id).first() is none%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="favorite( {{opening.id}} )"
-            >
-              Favorite
-            </button>
-            {%else%}
-            <button
-              id="favorite_button{{opening.id}}"
-              type=""
-              onclick="unfavorite( {{opening.id}} )"
-            >
-              Unfavorite
-            </button>
-            {%endif%} {%endif%}
-
-            <span>{{opening.name}}</span>
-          </label>
-          <div class="text-truncate"><small>{{opening.pgn}}</small></div>
-        </li>
-        {%endfor%}
+        <div id="sentinal">loading</div>
       </ul>
       <div style="max-width: 220px">
         <small style="overflow-wrap: break-word"
@@ -143,7 +113,8 @@
         <li
           class="list-group-item list-group-item-success list-group-item-action"
           style="display: inline"
-          id="setBase"
+          id="Base"
+          onclick="setBase()"
         >
           Set as Base Opening
         </li>
@@ -201,6 +172,7 @@
     </div>
 
     <script src="{{url_for('static',filename='js/random_logic.js')}}"></script>
+    <script src="{{url_for('static',filename='js/scrolling.js')}}"></script>
     <script>
       $("#whiteOrientationBtn").on("click", function () {
         board.orientation("white");
@@ -212,11 +184,33 @@
       $("#CompMoves").on("click", function () {
         makeRandomMove();
       });
-      $("#setBase").on("click", function () {
-        playing_random = true;
-        base_id = id;
-        base_pgn = game.pgn();
-      });
+      function setBase() {
+        if (!playing_random) {
+          playing_random = true;
+          base_id = id;
+          base_pgn = game.pgn();
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-danger list-group-item-action"
+          );
+          $("#Base").html("Unbind Base Opening");
+          $("#Base").attr("onclick", "unsetBase()");
+        }
+      }
+      function unsetBase() {
+        if (playing_random) {
+          playing_random = false;
+          base_id = 1;
+          base_pgn = "";
+          $("#Base").attr(
+            "class",
+            "list-group-item list-group-item-success list-group-item-action"
+          );
+          $("#Base").html("Set Base Opening");
+          $("#Base").attr("onclick", "setBase()");
+        }
+      }
+      scroll_all();
     </script>
     {# end Chess board #}
   </div>
