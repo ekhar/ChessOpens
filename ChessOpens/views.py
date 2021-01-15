@@ -1,4 +1,4 @@
-from flask import flash,render_template, url_for, jsonify, redirect,session, request, g
+from flask import flash,render_template, url_for, jsonify, redirect,session, request, g,make_response
 from sqlalchemy import or_
 from functools import wraps
 from flask_session import Session
@@ -22,10 +22,6 @@ def home():
     db_moves = get_all_possible(id, move_number, pgn)[0]
     #current node name
     op_name = Opening.query.get(id).name
-    if current_user.is_authenticated:
-        openings = Opening.query.filter(Opening.user_id==None, Opening.user_id==current_user.id).all()
-    else:
-        openings = Opening.query.filter(Opening.user_id==None).all()
 
     return render_template("home.html",
                            op_data={
@@ -34,8 +30,6 @@ def home():
                                "id": id,
                                "parent_id": 0
                            },
-                           openings=openings,
-                           op = Opening
                            )
 
 
@@ -114,30 +108,6 @@ def update_nodes():
             "id": id,
             "parent_id": node.parent_id
         })
-
-@app.route('/search', methods=["GET", "POST"])
-def search():
-    if request.method == "POST":
-        name = request.get_json()["str_name"]
-        search1 = "%{0}%".format(name)
-        #include () in searches
-        search2 = "%({})%".format(name)
-        
-        if current_user.is_authenticated:
-
-            name_results = Opening.query.filter(Opening.name.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id) ).all()
-            name_results2 = Opening.query.filter(Opening.name.like(search2), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
-            pgn_results =  Opening.query.filter(Opening.pgn.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
-
-        else:
-            name_results = Opening.query.filter(Opening.name.like(search1)).all()
-            name_results2 = Opening.query.filter(Opening.name.like(search2)).all()
-            pgn_results =  Opening.query.filter(Opening.pgn.like(search1)).all()
-
-        openings = name_results+pgn_results + name_results2 
-        
-        #returns html from boardinfo.html effectivley re instantiating what {{openings}} is
-        return jsonify({"data": render_template("/searchop.html",openings = openings)})
 
 @app.route('/logingoogle', methods=["GET"])
 def logingoogle():
@@ -235,10 +205,7 @@ def view_favorites():
 
 @app.route("/view_all", methods=['GET', 'POST'])
 def view_all():
-    openings = Opening.query.filter_by(user_id=None).all()
-    if current_user.is_authenticated:
-        openings += Opening.query.filter_by(user_id=current_user.id).all()
-    return jsonify({"data": render_template("/searchop.html",openings = openings)})
+    return url_for("home")
 
 @app.route("/view_custom", methods=['GET', 'POST'])
 @login_required
@@ -376,3 +343,180 @@ def undo():
             "id": id,
             "parent_id": parent_id
         })
+
+
+@app.route("/scroll_all",methods=["GET", "POST"])
+def load_all():
+    """ Route to return the posts """
+    if current_user.is_authenticated:
+        op = Opening.query.filter(or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
+    else:
+        op = Opening.query.filter(Opening.user_id==None).all()
+    
+    quantity=50
+
+    print("op size " + str(len(op)))
+
+    if request.method=="POST":
+
+        counter = int(request.get_json()["counter"])  # The 'counter' value sent in the QS
+        print(counter)
+
+        if counter == 0:
+            print(f"Returning posts 0 to {quantity}")
+            # Slice 0 -> quantity from the db
+            openings = op[0:50]
+            counter = quantity
+            res = jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+
+        elif counter == len(op):
+            print("No more posts")
+            res = jsonify({"data": render_template("/searchop.html",openings = None), "counter":counter, "finished": True})
+
+        else:
+            print(f"Returning posts {counter} to {counter + quantity}")
+            # Slice counter -> quantity from the db
+            openings = op[counter: counter + quantity]
+            counter = counter+quantity
+            res= jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+    return res
+
+@login_required
+@app.route("/scroll_fav",methods=["GET", "POST"])
+def load_fav():
+    if current_user.is_authenticated:
+        op = current_user.favorites.all()
+        print(op)
+
+        quantity=50
+
+        print("op size " + str(len(op)))
+
+        if request.method=="POST":
+
+            counter = int(request.get_json()["counter"])  # The 'counter' value sent in the QS
+
+            if counter == 0:
+                print(f"Returning posts 0 to {quantity}")
+                # Slice 0 -> quantity from the db
+                openings = op[0:50]
+                counter = quantity
+                res = jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+
+            elif counter == len(op):
+                counter = len(op)
+                print("No more posts")
+                res = jsonify({"data": render_template("/searchop.html",openings = None), "counter":counter, "finished": True})
+
+            else:
+                print(f"Returning posts {counter} to {counter + quantity}")
+                # Slice counter -> quantity from the db
+                openings = op[counter: counter + quantity]
+                counter = counter+quantity
+                res= jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+    return res
+
+@login_required
+@app.route("/scroll_created",methods=["GET", "POST"])
+def load_created():
+    if current_user.is_authenticated:
+        op = current_user.custom_op
+    else:
+        op = Opening.query.filter(Opening.user_id==None).all()
+    
+    quantity=50
+
+    print("op size " + str(len(op)))
+
+    if request.method=="POST":
+
+        counter = int(request.get_json()["counter"])  # The 'counter' value sent in the QS
+
+        if counter == 0:
+            print(f"Returning posts 0 to {quantity}")
+            # Slice 0 -> quantity from the db
+            openings = op[0:50]
+            counter = quantity
+            res = jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+
+        elif counter == len(op):
+            print("No more posts")
+            res = jsonify({"data": render_template("/searchop.html",openings = None), "counter":counter, "finished": True})
+
+        else:
+            print(f"Returning posts {counter} to {counter + quantity}")
+            # Slice counter -> quantity from the db
+            openings = op[counter: counter + quantity]
+            counter = counter+quantity
+            res= jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+    return res
+
+@app.route('/scroll_search', methods=["GET", "POST"])
+def search():
+    if request.method == "POST":
+        name = request.get_json()["str_name"]
+        search1 = "%{0}%".format(name)
+        #include () in searches
+        search2 = "%({})%".format(name)
+        
+        if current_user.is_authenticated:
+
+            name_results = Opening.query.filter(Opening.name.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id) ).all()
+            name_results2 = Opening.query.filter(Opening.name.like(search2), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
+            pgn_results =  Opening.query.filter(Opening.pgn.like(search1), or_(Opening.user_id==None, Opening.user_id==current_user.id)).all()
+
+        else:
+            name_results = Opening.query.filter(Opening.name.like(search1)).all()
+            name_results2 = Opening.query.filter(Opening.name.like(search2)).all()
+            pgn_results =  Opening.query.filter(Opening.pgn.like(search1)).all()
+
+        op = name_results+pgn_results + name_results2 
+        quantity=50
+
+        print("op size " + str(len(op)))
+
+        counter = int(request.get_json()["counter"])  # The 'counter' value sent in the QS
+
+        if counter == 0:
+            print(f"Returning posts 0 to {quantity}")
+            # Slice 0 -> quantity from the db
+            openings = op[0:50]
+            counter = quantity
+            res = jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+
+        elif counter == len(op):
+            print("No more posts")
+            res = jsonify({"data": render_template("/searchop.html",openings = None), "counter":counter, "finished": True})
+
+        else:
+            print(f"Returning posts {counter} to {counter + quantity}")
+            # Slice counter -> quantity from the db
+            openings = op[counter: counter + quantity]
+            counter = counter+quantity
+            res= jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+    return res
+
+
+def scroll_logic(op):
+    quantity=50
+
+    counter = int(request.get_json()["counter"])  # The 'counter' value sent in the QS
+
+    if counter == 0:
+        print(f"Returning posts 0 to {quantity}")
+        # Slice 0 -> quantity from the db
+        openings = op[0:50]
+        counter = quantity
+        res = jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+
+    elif counter == len(op):
+        print("No more posts")
+        res = jsonify({"data": render_template("/searchop.html",openings = None), "counter":counter, "finished": True})
+
+    else:
+        print(f"Returning posts {counter} to {counter + quantity}")
+        # Slice counter -> quantity from the db
+        openings = op[counter: counter + quantity]
+        counter = counter+quantity
+        res= jsonify({"data": render_template("/searchop.html",openings = openings), "counter": counter, "finished": False})
+    return res

@@ -1,4 +1,5 @@
 function searchbar(str) {
+  counter = 0;
   req = $.ajax({
     type: "POST",
     url: "/search",
@@ -24,17 +25,19 @@ function view_favorites() {
 }
 
 function view_all() {
-  req = $.ajax({
-    type: "POST",
-    url: "/view_all",
-    contentType: "application/json",
-  });
-  req.done(function (data) {
-    $("#op_list").html("");
-    $("#op_list").append(data.data);
-  });
+  //  req = $.ajax({
+  //    type: "POST",
+  //    url: "/view_all",
+  //    contentType: "application/json",
+  //  });
+  //  req.done(function (data) {
+  //    $("#op_list").html("");
+  //    $("#op_list").append(data.data);
+  //  });
 }
+
 function view_customs() {
+  counter = 0;
   req = $.ajax({
     type: "POST",
     url: "/view_custom",
