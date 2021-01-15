@@ -1,0 +1,36 @@
+{% for opening in openings %}
+<li
+  onclick="loadboard( Number('{{  opening.id  }}'), '{{opening.pgn}}')"
+  class="list-group-item list-group-item-action"
+>
+  <label for="id-of-input" class="custom-checkbox">
+    {%if current_user.is_authenticated%} {# favorites button #} {% if
+    current_user.favorites.filter_by(id=opening.id).first() is none%}
+    <button
+      id="favorite_button{{opening.id}}"
+      type=""
+      onclick="favorite( {{opening.id}} )"
+    >
+      Favorite
+    </button>
+    {%else%}
+    <button
+      id="favorite_button{{opening.id}}"
+      type=""
+      onclick="unfavorite( {{opening.id}} )"
+    >
+      Unfavorite
+    </button>
+    {%endif%} {% if opening.user_id == current_user.id %}
+    <button id="remove_button{{opening.id}}" onclick="remove({{opening.id}})">
+      Delete
+    </button>
+
+    {%endif%} {%endif%}
+
+    <span>{{opening.name}}</span>
+  </label>
+  <div class="text-truncate"><small>{{opening.pgn}}</small></div>
+</li>
+{%endfor%}
+<script src="{{url_for('static', filename='js/favorite.js')}}"></script>
